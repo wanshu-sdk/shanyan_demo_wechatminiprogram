@@ -3,16 +3,16 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": "node_modules"
+        "value": "node_modules",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".claude"
+        "value": ".claude",
+        "type": "folder"
       },
       {
-        "type": "suffix",
-        "value": ".map"
+        "value": ".map",
+        "type": "suffix"
       }
     ],
     "include": []
@@ -56,7 +56,7 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.3.4",
+  "libVersion": "2.25.4",
   "appid": "wxae73f63d6ef4b286",
   "projectname": "shanyan-miniprogram-sdk",
   "condition": {},

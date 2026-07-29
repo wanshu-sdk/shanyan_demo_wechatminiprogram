@@ -21,7 +21,7 @@
   <!-- 四个按钮 2x2 排列 -->
   <view class="btn-row">
     <view class="mode-card" bindtap="onStandardStyle">
-      <image class="card-icon" src="/images/login_demo_4.png" mode="aspectFit"></image>
+      <image class="card-icon" src="/images/login_demo_1.png" mode="aspectFit"></image>
       <text class="card-title">默认弹窗样式</text>
     </view>
     <view class="mode-card" bindtap="onCustomStyle">
@@ -35,13 +35,16 @@
       <text class="card-title">自定义弹窗样式1</text>
     </view>
     <view class="mode-card" bindtap="onCustomStyle2">
-      <image class="card-icon" src="/images/login_demo_1.png" mode="aspectFit"></image>
+      <image class="card-icon" src="/images/login_demo_4.png" mode="aspectFit"></image>
       <text class="card-title">自定义弹窗样式2</text>
     </view>
   </view>
 
-  <!-- Loading 遮罩 -->
-  <view class="loading-overlay" wx:if="{{showLoading}}">
-    <image class="loading-gif" src="/images/login_demo_loading.gif" mode="aspectFit"></image>
+  <!-- Loading 遮罩层 -->
+  <view wx:if="{{showLoading}}" class="loading-mask">
+    <view class="loading-content">
+      <image class="loading-gif" src="/images/login_demo_loading.gif" mode="aspectFit"></image>
+      <text class="loading-text">正在检测网络环境...</text>
+    </view>
   </view>
 </view>

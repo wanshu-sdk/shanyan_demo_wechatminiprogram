@@ -30,6 +30,10 @@
       <text class="btn-text">第一步：初始化</text>
       <text class="btn-status" wx:if="{{stepResults.init}}">✓ 完成</text>
     </view>
+    <view class="step-btn optional {{stepResults.precheck ? 'done' : ''}} {{currentStep < 1 ? 'disabled' : ''}}" bindtap="onPreCheck">
+      <text class="btn-text">（可选）预检查网络环境</text>
+      <text class="btn-status" wx:if="{{stepResults.precheck}}">{{stepResults.precheck.code === '0' ? '✓ 支持' : '✗ ' + stepResults.precheck.code}}</text>
+    </view>
     <view class="step-btn {{stepResults.token ? 'done' : ''}} {{currentStep < 1 ? 'disabled' : ''}}" bindtap="onStep2Token">
       <text class="btn-text">第二步：启动授权页</text>
       <text class="btn-status" wx:if="{{stepResults.token}}">✓ 完成</text>

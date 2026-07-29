@@ -70,8 +70,28 @@ Page({
       dlog.log('[Page-Experience] SDK init result:', JSON.stringify(res));
       if (res.code === '200000') {
         app.globalData.sdkInitialized = true;
+        // 初始化成功后调用预检查网络环境
+        this.preCheckNetwork();
       } else {
         dlog.warn('[Page-Experience] SDK init failed, but continuing for experience');
+      }
+    });
+  },
+
+  /**
+   * 预检查网络环境
+   * 在初始化成功后调用，检测当前网络是否支持取号
+   */
+  preCheckNetwork() {
+    dlog.log('[Page-Experience] 开始预检查网络环境...');
+    this.setData({ showLoading: true });
+    SDK.preCheckMobile((res) => {
+      this.setData({ showLoading: false });
+      dlog.log('[Page-Experience] 预检查结果:', JSON.stringify(res));
+      if (res.code === '0' || res.message === '网络环境支持取号') {
+        dlog.log('[Page-Experience] ✓ 网络环境支持取号');
+      } else {
+        dlog.warn('[Page-Experience] ✗ 网络环境不支持取号:', res.message);
       }
     });
   },
@@ -100,23 +120,11 @@ Page({
    */
   openAuthWithStyle(getPreset, label) {
     const option = getPreset();
-    this.showLoadingForAuth();
     dlog.log('[Page-Experience] openAuthWithStyle 拉起授权页, label:', label);
     SDK.openLoginAuth({ option: option }, (authRes) => {
-      this.hideLoading();
       dlog.log('[Page-Experience] openAuthAuth result:', JSON.stringify(authRes));
       dlog.log('[Page-Experience] authRes.code:', authRes && authRes.code, 'type:', typeof authRes);
       if (authRes.code === '501') {
-        // 全屏样式中"其他登录方式"按钮返回 501，跳转到行为验证码
-        if (label === '全屏样式') {
-          dlog.log('[Page-Experience] 全屏样式用户选择其他登录方式 (501)，跳转到行为验证码页');
-          wx.switchTab({
-            url: '/pages/page-captcha/index',
-            success: () => { dlog.log('[Page-Experience] switchTab 跳转成功'); },
-            fail: (err) => { dlog.error('[Page-Experience] switchTab 跳转失败:', JSON.stringify(err)); },
-          });
-          return;
-        }
         dlog.log('[Page-Experience] 用户取消授权 (501)');
         wx.showToast({ title: '用户取消授权', icon: 'none' });
         return;
@@ -167,9 +175,7 @@ Page({
 
   /** 默认弹窗样式：不传 option，SDK 使用默认配置 */
   onStandardStyle() {
-    this.showLoadingForAuth();
     SDK.openLoginAuth((authRes) => {
-      this.hideLoading();
       dlog.log('[Page-Experience] openLoginAuth result:', JSON.stringify(authRes));
       if (authRes.code === '501') {
         wx.showToast({ title: '用户取消授权', icon: 'none' });
@@ -191,21 +197,18 @@ Page({
   /** 全屏样式 */
   onCustomStyle() {
     const { getFullScreenOption } = require('../../ui-presets');
-    this.showLoadingForAuth();
     this.openAuthWithStyle(getFullScreenOption, '全屏样式');
   },
 
   /** 自定义弹窗样式1（极简样式） */
   onCustomStyle1() {
     const { getMinimalPopupOption } = require('../../ui-presets');
-    this.showLoadingForAuth();
     this.openAuthWithStyle(getMinimalPopupOption, '自定义弹窗样式1');
   },
 
   /** 自定义弹窗样式2（底部弹窗） */
   onCustomStyle2() {
     const { getBottomPopupOption } = require('../../ui-presets');
-    this.showLoadingForAuth();
     this.openAuthWithStyle(getBottomPopupOption, '自定义弹窗样式2');
   },
 

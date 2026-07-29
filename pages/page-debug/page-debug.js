@@ -17,12 +17,17 @@ const MOBILE_QUERY_URLS = {
  * 调试模式页 - 分步测试 SDK 完整流程
  *
  * 【业务流程】
- * 该页面提供三个独立的操作按钮，用户按顺序点击来测试 SDK 的完整功能链路：
+ * 该页面提供四个操作按钮（含一个可选步骤），用户按顺序点击来测试 SDK 的完整功能链路：
  *
  * 步骤 1 - 初始化（SDK.init）
  *   - 调用 SDK.init({ appId }, callback)
  *   - 请求服务端获取运营商（移动/联通/电信）的取号参数
  *   - 成功返回 traceId，保存为后续取号凭证
+ *
+ * 可选 - 预检查网络环境（SDK.preCheckMobile）
+ *   - 需在步骤 1 成功后调用（可选步骤，不影响主流程）
+ *   - 判断当前网络是否支持取号
+ *   - code='0' 支持取号；code='504' 不支持；code='505' 疑似热点
  *
  * 步骤 2 - 拉起授权页获取 token（SDK.openLoginAuth）
  *   - 需步骤 1 成功才能调用
@@ -51,9 +56,10 @@ Page({
     appId: app.globalData.appId,
     envLabel: app.globalData.envLabel,
     logs: [],
-    // 三个步骤的执行结果，每步成功时保存响应数据
+    // 步骤的执行结果，每步成功时保存响应数据
     stepResults: {
       init: null,       // 步骤 1 的结果（含 traceId）
+      precheck: null,   // 可选预检查的结果（含 code: '0'/'504'/'505'）
       token: null,      // 步骤 2 的结果（含加密 token）
       mobile: null,     // 步骤 3 的结果（含解密手机号）
     },
@@ -99,6 +105,45 @@ Page({
         this.setData({ 'stepResults.init': res, currentStep: 1, hasResults: true });
       } else {
         this.appendToLog(`Init 失败: ${res.message}`, true);
+      }
+    });
+  },
+
+  /**
+   * 可选步骤：预检查网络环境（SDK.preCheckMobile）
+   *
+   * 【前置条件】
+   * - 步骤 1（init）必须成功
+   * - 此为可选步骤，不影响后续步骤 2 的执行
+   *
+   * 【流程】
+   * 1. 调用 SDK.preCheckMobile(callback)
+   * 2. 插件判断当前网络状态
+   * 3. 返回结果码：
+   *    - code='0'   : 网络环境支持取号（可拉起授权页）
+   *    - code='504' : 网络环境不支持取号（纯 WiFi）
+   *    - code='505' : 疑似热点环境
+   *
+   * 【用途】
+   * 在拉起授权页之前提前识别不支持取号的场景，便于做降级处理。
+   */
+  onPreCheck() {
+    if (!this.data.stepResults.init) {
+      this.appendToLog('请先完成第一步初始化', true);
+      return;
+    }
+    this.appendToLog('调用 SDK.preCheckMobile()，预检查网络环境...');
+    SDK.preCheckMobile((res) => {
+      this.appendToLog(`preCheckMobile 回调: ${JSON.stringify(res)}`);
+      this.setData({ 'stepResults.precheck': res, hasResults: true });
+      if (res.code === '0') {
+        this.appendToLog('网络环境支持取号，可以拉起授权页');
+      } else if (res.code === '504') {
+        this.appendToLog('网络环境不支持取号（纯 WiFi），建议降级为短信登录', true);
+      } else if (res.code === '505') {
+        this.appendToLog('疑似热点环境', true);
+      } else {
+        this.appendToLog(`预检查失败: ${res.message}`, true);
       }
     });
   },

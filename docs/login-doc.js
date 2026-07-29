@@ -39,8 +39,8 @@ module.exports = {
 
 | 组件 | 推荐版本 | 说明 |
 |---|---|---|
-| npm SDK（\`shanyan-miniprogram-sdk\`） | 1.0.2 | 通过 \`npm install shanyan-miniprogram-sdk@<version>\` 安装 |
-| 取号插件（\`auth-plugin\`） | 2.2.0 | 在 \`app.json\` 的 \`plugins\` 中配置 \`version\` 字段 |
+| npm SDK（\`shanyan-miniprogram-sdk\`） | 1.1.2 | 通过 \`npm install shanyan-miniprogram-sdk@<version>\` 安装 |
+| 取号插件（\`auth-plugin\`） | 2.2.2 | 在 \`app.json\` 的 \`plugins\` 中配置 \`version\` 字段 |
 
 > **注意**：1.0.3 版本存在语法错误（\`getNetworkType\` 方法缺少函数声明，报错 \`'return' outside of function\`），请暂时不要升级。
 
@@ -69,7 +69,7 @@ npm install shanyan-miniprogram-sdk
   ],
   "plugins": {
     "auth-plugin": {
-      "version": "2.2.0",
+      "version": "2.2.2",
       "provider": "wx35678fec06d475b4"
     }
   }

@@ -241,15 +241,20 @@ function getFullScreenOption() {
     },
     // === 取消授权按钮 cancleBtnStyle ===
     cancleBtnStyle: {
-      'text': '其他登录方式>', // 按钮文案
-      'fontColor': '#FFFFFF',  // 按钮字体颜色（白色）
-      'fontSize': '30rpx',     // 按钮字体大小
-      'width': '80%',       // 按钮宽度（占屏幕宽度的 80%）
-      'height': '88rpx',       // 按钮高度
-      'bgColor': '#2b7de0',    // 按钮背景颜色（蓝色）
-      'radius': '44rpx',       // 按钮圆角半径
-      'left': 'center',        // 按钮水平位置（居中）
-      'top': '58%'             // 按钮距离屏幕顶部的位置
+      'text': '<',              // 按钮文案（空=不显示此按钮）
+      'radius': '36rpx',       // 按钮圆角半径
+      'textAlign': 'left',   // 文本对齐方式（左对齐）
+      'fontFamily': '',        // 按钮字体
+      'fontColor': '#000000',  // 按钮字体颜色（黑色）
+      'fontSize': '60rpx',     // 按钮字体大小（大号）
+      'top': '80rpx',         // 按钮距离屏幕顶部的距离
+      'left': '40rpx',         // 按钮距离屏幕左边的距离
+      'width': '88rpx',       // 按钮宽度
+      'height': '98rpx',      // 按钮高度
+      'bgColor': 'transparent', // 按钮背景（透明）
+      'borderColor': 'transparent', // 按钮边框（透明）
+      'borderWidth': "0px"    // 按钮边框线宽（无）
+
     },
     // === 登录授权按钮 sureBtnStyle ===
     sureBtnStyle: {
@@ -298,20 +303,18 @@ function getFullScreenOption() {
     customControlStyle: [
       {
         'ifShow': true,        // 是否展示自定义控件
-        'name': '‹',          // 按钮文案（返回按钮）
-        'openType': "navigateBack", // 微信小程序的返回功能
-        'textAlign': 'left',   // 文本对齐方式（左对齐）
-        'fontFamily': '',        // 按钮字体
-        'fontColor': '#000000',  // 按钮字体颜色（黑色）
-        'fontSize': '60rpx',     // 按钮字体大小（大号）
-        'top': '80rpx',         // 按钮距离屏幕顶部的距离
-        'left': '40rpx',         // 按钮距离屏幕左边的距离
-        'width': '88rpx',       // 按钮宽度
-        'height': '68rpx',      // 按钮高度
-        'bgColor': 'transparent', // 按钮背景（透明）
-        'borderColor': 'transparent', // 按钮边框（透明）
-        'borderWidth': "0px"    // 按钮边框线宽（无）
-      }
+        'name': '其他登录方式>', // 按钮文案
+        'lineHeight':'88rpx',
+        'fontColor': '#FFFFFF',  // 按钮字体颜色（白色）
+        'fontSize': '30rpx',     // 按钮字体大小
+        'width': '80%',       // 按钮宽度（占屏幕宽度的 80%）
+        'height': '88rpx',       // 按钮高度
+        'bgColor': '#2b7de0',    // 按钮背景颜色（蓝色）
+        'radius': '44rpx',       // 按钮圆角半径
+        'left': 'center',        // 按钮水平位置（居中）
+        'top': '58%' ,            // 按钮距离屏幕顶部的位置
+        'textAlign': 'center',   // 文本对齐方式（左对齐）
+      },
     ],
   };
 }
@@ -362,11 +365,12 @@ function getMinimalPopupOption() {
       'fontFamily': '',        // 号码栏字体
       'fontColor': '#333333',  // 号码栏字体颜色（深灰色）
       'fontSize': '44rpx',     // 号码栏字体大小（中等）
-      'top': '80rpx',          // 号码栏距离弹窗顶部的距离
+      'top': '130rpx',          // 号码栏距离弹窗顶部的距离
       'left': 'center'         // 号码栏水平位置（居中）
     },
     // === 授权文本 authTextStyle ===
     authTextStyle: {
+      'top':'80rpx',
       'fontSize': '25rpx'      // 授权文本字体大小
     },
     // === 授权栏 authTipStyle ===
@@ -375,19 +379,16 @@ function getMinimalPopupOption() {
     },
     // === 取消授权按钮 cancleBtnStyle ===
     cancleBtnStyle: {
-      'text': '',              // 按钮文案（空=不显示此按钮）
+      'text': 'X',              // 按钮文案（空=不显示此按钮）
       'textAlign': 'center',   // 文本对齐方式
-      'fontFamily': '',        // 按钮字体
-      'fontColor': '#999999',  // 按钮字体颜色（灰色）
-      'fontSize': '28rpx',     // 按钮字体大小
-      'top': '310rpx',         // 按钮距离弹窗顶部的距离
-      'left': 'center',        // 按钮水平位置（居中）
-      'width': '200rpx',       // 按钮宽度
-      'height': '72rpx',       // 按钮高度
-      'bgColor': '#F5F5F5',    // 按钮背景颜色（浅灰色）
-      'radius': '36rpx',       // 按钮圆角半径
+      'fontColor': '#000000',  // 按钮字体颜色（灰色）
+      'fontSize': '40rpx',     // 按钮字体大小
+      'top': '30rpx',         // 按钮距离弹窗顶部的距离
+      'left': '690rpx',  // 按钮位置：屏幕宽度 - 30rpx = 720rpx（右上角，适配所有机型）
+      'width': '40rpx',       // 按钮宽度
+      'height': '40rpx',       // 按钮高度
+      'bgColor': 'transparent',    // 按钮背景颜色（浅灰色）
       'borderColor': 'transparent', // 按钮边框颜色（透明）
-      'borderWidth': '0'       // 按钮边框线宽
     },
     // === 登录授权按钮 sureBtnStyle ===
     sureBtnStyle: {
@@ -396,7 +397,7 @@ function getMinimalPopupOption() {
       'fontFamily': '',        // 按钮字体
       'fontColor': '#FFFFFF',  // 按钮字体颜色（白色）
       'fontSize': '28rpx',     // 按钮字体大小
-      'top': '220rpx',         // 按钮距离弹窗顶部的距离
+      'top': '240rpx',         // 按钮距离弹窗顶部的距离
       'left': 'center',        // 按钮水平位置（居中）
       'width': '520rpx',       // 按钮宽度（占弹窗宽度的大部分）
       'height': '80rpx',       // 按钮高度（较大）

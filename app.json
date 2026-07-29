@@ -17,7 +17,7 @@
   },
   "plugins": {
     "auth-plugin": {
-      "version": "2.2.0",
+      "version": "2.2.2",
       "provider": "wx35678fec06d475b4"
     },
     "captcha": {
