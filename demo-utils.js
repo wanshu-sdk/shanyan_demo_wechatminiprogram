@@ -1,8 +1,8 @@
 /**
  * Demo 工具模块
  *
- * 提供 Demo 页面所需的加密和配置功能，避免直接引用 SDK 内部子模块
- * （微信小程序真机不支持 npm 子路径导入，如 require('shanyan-miniprogram-sdk/crypto')）。
+ * 提供 Demo 页面所需的加密和配置功能。
+ * 使用 crypto-js 库进行加密操作。
  *
  * 包含：
  * - CryptoJS 封装：hmacSHA256Sign、aesDecrypt、md5

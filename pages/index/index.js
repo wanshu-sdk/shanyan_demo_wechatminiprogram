@@ -42,6 +42,13 @@ Page({
     if (modal) {
       modal.checkAndShow();
     }
+    // 非首次启动兜底：已同意隐私政策且 SDK 未初始化时（如直接落在首页未点击 tab），
+    // 初始化 SDK 并预检查网络（首次启动由隐私弹窗"同意并继续"触发，未同意前不初始化）
+    const app = getApp();
+    if (wx.getStorageSync('privacyAgreed') && app && !app.globalData.sdkInitialized
+        && typeof app.initSDKAndPreCheck === 'function') {
+      app.initSDKAndPreCheck();
+    }
   },
 
   /**

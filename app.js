@@ -50,6 +50,8 @@ const ENV_MAP = {
 App({
   globalData: {
     sdkInitialized: false,
+    // 最近一次预检查结果（init 成功后由 initSDKAndPreCheck 写入，供页面层读取）
+    preCheckResult: null,
     appId: '',
     appKey: '',
     envLabel: '',
@@ -84,5 +86,39 @@ App({
     this.globalData.captchaTicketIp = envConfig.captchaTicketIp;
 
     console.log(`[App] 启动成功，当前环境: ${envConfig.label}, appId: ${envConfig.appId}`);
-  }
+  },
+
+  /**
+   * 初始化 SDK 并预检查网络环境
+   *
+   * 【触发时机】（隐私合规：确保用户同意隐私政策后才初始化）
+   * 1. 首次启动：用户点击隐私弹窗"同意并继续"按钮时调用
+   * 2. 非首次启动：用户点击底部"一键登录"tab 时调用
+   *
+   * 【流程】
+   * 1. 调用 SDK.init()（二次调用走本地缓存，无额外网络开销）
+   * 2. 初始化成功后自动调用 SDK.preCheckMobile() 预检查网络环境
+   * 3. 预检查结果记录日志并保存到 globalData.preCheckResult
+   */
+  initSDKAndPreCheck() {
+    SDK.init({ appId: this.globalData.appId }, (res) => {
+      console.log('[App] SDK init result:', JSON.stringify(res));
+      if (res.code === '200000') {
+        this.globalData.sdkInitialized = true;
+
+        // 初始化成功后预检查网络环境（结果仅记录，不阻断业务流程）
+        SDK.preCheckMobile((pcRes) => {
+          console.log('[App] 预检查结果:', JSON.stringify(pcRes));
+          this.globalData.preCheckResult = pcRes;
+          if (pcRes.code === '0') {
+            console.log('[App] ✓ 网络环境支持取号');
+          } else {
+            console.warn('[App] ✗ 网络环境不支持取号:', pcRes.message);
+          }
+        });
+      } else {
+        console.warn('[App] SDK init 失败:', res.message);
+      }
+    });
+  },
 });

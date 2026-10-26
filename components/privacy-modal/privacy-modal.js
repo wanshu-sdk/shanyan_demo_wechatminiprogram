@@ -23,6 +23,12 @@ Component({
       wx.setStorageSync('privacyAgreed', true);
       this.setData({ visible: false });
       this.triggerEvent('agree');
+
+      // 首次启动：用户同意隐私政策后，初始化 SDK 并预检查网络环境（隐私合规要求）
+      const app = getApp();
+      if (app && typeof app.initSDKAndPreCheck === 'function') {
+        app.initSDKAndPreCheck();
+      }
     },
 
     onDisagree() {

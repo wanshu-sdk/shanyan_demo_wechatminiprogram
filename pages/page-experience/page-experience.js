@@ -18,7 +18,7 @@ const app = getApp();
  * 按钮 4：标准样式 - 底部圆角弹窗，双按钮布局，完整功能（协议栏）
  *
  * 【技术细节】
- * - 页面加载时自动初始化，即使失败也继续（提供体验）
+ * - SDK 初始化与预检查由外部按隐私合规时机触发（app.initSDKAndPreCheck）
  * - wx.getWindowInfo 获取状态栏高度，适配不同设备
  * - 每次授权完成时将结果编码为 URL 参数传递到结果页
  */
@@ -26,12 +26,17 @@ Page({
   data: {
     statusBarHeight: 20,
     showLoading: false,
+    loadingText: '正在拉起授权页...',  // loading 遮罩文案（随场景更新）
   },
 
   /**
    * 页面加载时触发
-   * 1. 获取状态栏高度（适配刘海屏等异形屏幕）
-   * 2. 自动初始化 SDK（请求服务端获取运营商参数）
+   * 获取状态栏高度（适配刘海屏等异形屏幕）
+   *
+   * 【注意】SDK 初始化与预检查不在页面加载时触发，
+   * 由外部按隐私合规时机调用 app.initSDKAndPreCheck()：
+   * - 首次启动：隐私弹窗"同意并继续"时触发
+   * - 非首次启动：点击底部"一键登录"tab 时触发
    */
   onLoad() {
     try {
@@ -44,7 +49,6 @@ Page({
         statusBarHeight: 20,
       });
     }
-    this.autoInit();
   },
 
   /**
@@ -55,32 +59,10 @@ Page({
   },
 
   /**
-   * 自动初始化 SDK
-   *
-   * 【流程】
-   * 1. 开启 SDK 日志输出
-   * 2. 调用 SDK.init()
-   * 3. 记录初始化结果到 globalData（仅用于标记，不阻断后续流程）
-   *
-   * 【重要】
-   * 即使初始化失败也不中止，用户可继续体验其他样式
-   */
-  autoInit() {
-    SDK.init({ appId: app.globalData.appId }, (res) => {
-      dlog.log('[Page-Experience] SDK init result:', JSON.stringify(res));
-      if (res.code === '200000') {
-        app.globalData.sdkInitialized = true;
-      } else {
-        dlog.warn('[Page-Experience] SDK init failed, but continuing for experience');
-      }
-    });
-  },
-
-  /**
    * 显示 loading，SDK 回调时隐藏
    */
   showLoadingForAuth() {
-    this.setData({ showLoading: true });
+    this.setData({ showLoading: true, loadingText: '正在拉起授权页...' });
   },
 
   hideLoading() {

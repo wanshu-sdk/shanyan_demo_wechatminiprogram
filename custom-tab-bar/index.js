@@ -28,6 +28,16 @@ Component({
   methods: {
     switchTab(e) {
       const path = e.currentTarget.dataset.path;
+
+      // 非首次启动：点击"一键登录"tab 时初始化 SDK 并预检查网络环境
+      // （首次启动已由隐私弹窗"同意并继续"触发过；init 二次调用走本地缓存，无额外开销）
+      if (path === '/pages/index/index') {
+        const app = getApp();
+        if (app && typeof app.initSDKAndPreCheck === 'function') {
+          app.initSDKAndPreCheck();
+        }
+      }
+
       wx.switchTab({ url: path });
     }
   }

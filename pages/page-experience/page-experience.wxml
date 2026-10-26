@@ -45,4 +45,12 @@
       <text class="card-title">未勾选协议二次确认</text>
     </view>
   </view>
+
+  <!-- Loading 遮罩层 -->
+  <view wx:if="{{showLoading}}" class="loading-mask">
+    <view class="loading-content">
+      <image class="loading-gif" src="/images/login_demo_loading.gif" mode="aspectFit"></image>
+      <text class="loading-text">{{loadingText}}</text>
+    </view>
+  </view>
 </view>

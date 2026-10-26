@@ -242,20 +242,22 @@ function getFullScreenOption() {
       'left': 'center'         // 号码栏水平位置（居中）
     },
     // === 取消授权按钮 cancleBtnStyle ===
+    // 由原自定义返回控件（id='back'）迁移而来：左上角"‹"返回按钮。
+    // 使用标准取消按钮承载返回：点击返回 code='501'，插件确定会关闭授权页，且不操作小程序页面栈
     cancleBtnStyle: {
-      'text': '',              // 按钮文案（空=不显示此按钮）
-      'textAlign': 'center',   // 文本对齐方式
-      'fontFamily': '',        // 按钮字体
-      'fontColor': '#999999',  // 按钮字体颜色（灰色）
-      'fontSize': '108rpx',     // 按钮字体大小
-      'top': '0',         // 按钮距离弹窗顶部的距离
-      'left': 'center',        // 按钮水平位置（居中）
-      'width': '0',       // 按钮宽度
-      'height': '0',       // 按钮高度
-      'bgColor': '#F5F5F5',    // 按钮背景颜色（浅灰色）
-      'radius': '36rpx',       // 按钮圆角半径
+      'text': '‹',              // 按钮文案（原自定义控件的 name）
+      'textAlign': 'left',      // 文本对齐方式（左对齐）
+      'fontFamily': '',         // 按钮字体
+      'fontColor': '#000000',   // 按钮字体颜色（黑色）
+      'fontSize': '60rpx',      // 按钮字体大小（大号）
+      'top': '80rpx',           // 按钮距离屏幕顶部的距离
+      'left': '40rpx',          // 按钮距离屏幕左边的距离
+      'width': '88rpx',         // 按钮宽度
+      'height': '68rpx',        // 按钮高度
+      'bgColor': 'transparent',     // 按钮背景（透明）
+      'radius': '0',            // 按钮圆角（无）
       'borderColor': 'transparent', // 按钮边框颜色（透明）
-      'borderWidth': '0'       // 按钮边框线宽
+      'borderWidth': '0'        // 按钮边框线宽（无）
     },
     // === 登录授权按钮 sureBtnStyle ===
     sureBtnStyle: {
@@ -302,25 +304,8 @@ function getFullScreenOption() {
     },
     // === 自定义按钮控件 customControlStyle（数组格式） ===
     customControlStyle: [
-      {
-        'ifShow': true,        // 是否展示自定义控件
-        'name': '‹',          // 按钮文案（返回按钮）
-        // 注意：不配置 openType/url —— 点击后插件仅回调 502+id（id='back'），
-        // 不操作小程序页面栈（配置 navigateBack 会退出当前页回到上一页），
-        // 业务方在 502 回调中按"仅关闭授权页"处理，不做页面跳转
-        'textAlign': 'left',   // 文本对齐方式（左对齐）
-        'fontFamily': '',        // 按钮字体
-        'fontColor': '#000000',  // 按钮字体颜色（黑色）
-        'fontSize': '60rpx',     // 按钮字体大小（大号）
-        'top': '80rpx',         // 按钮距离屏幕顶部的距离
-        'left': '40rpx',         // 按钮距离屏幕左边的距离
-        'width': '88rpx',       // 按钮宽度
-        'height': '68rpx',      // 按钮高度
-        'bgColor': 'transparent', // 按钮背景（透明）
-        'borderColor': 'transparent', // 按钮边框（透明）
-        'borderWidth': "0px",    // 按钮边框线宽（无）
-        'id':"back"
-      },
+      // 原左上角返回控件（id='back'）已移除，其样式迁移到 cancleBtnStyle（标准取消按钮，
+      // 点击返回 501 且插件确定关闭授权页）；customControlStyle 仅保留"其他登录方式"控件
       {
         'ifShow': true,        // 是否展示自定义控件
         'name': '其他登录方式>', // 按钮文案

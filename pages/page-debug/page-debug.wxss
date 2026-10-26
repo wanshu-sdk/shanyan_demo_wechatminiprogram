@@ -119,6 +119,23 @@
   background: rgba(76, 175, 80, 0.9);
 }
 
+/* 可选步骤：浅色背景 + 虚线边框，视觉上区分必填步骤 */
+.step-btn.optional {
+  background: rgba(255, 255, 255, 0.9);
+  color: #2b7de0;
+  border: 2rpx dashed #2b7de0;
+}
+
+.step-btn.optional.done {
+  background: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+  border: 2rpx dashed #4caf50;
+}
+
+.step-btn.optional .btn-status {
+  color: inherit;
+}
+
 /* 已完成且不可点击时，保持禁用样式 */
 .step-btn.done.disabled {
   background: #ccc;
