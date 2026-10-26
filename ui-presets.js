@@ -160,6 +160,8 @@ function getBottomPopupOption() {
       {
         'ifShow': true,        // 是否展示自定义控件（Boolean，默认 FALSE）
         'name': '其他登录方式>', // 自定义控件显示文案
+        'id': 'otherLogin',    // 控件 ID：用户点击返回 502 时随 openLoginAuth 回调返回，用于区分点击的控件
+        'openType': 'reLaunch', // 由插件在收起授权页的同时直接跳转（reLaunch 整页替换，比 switchTab 更连贯）
         'url': '/pages/page-captcha/index', // 点击跳转到行为验证码页
         'width': '200rpx',     // 自定义控件宽度
         'height': '',          // 自定义控件高度（空=自适应）
@@ -241,15 +243,19 @@ function getFullScreenOption() {
     },
     // === 取消授权按钮 cancleBtnStyle ===
     cancleBtnStyle: {
-      'text': '其他登录方式>', // 按钮文案
-      'fontColor': '#FFFFFF',  // 按钮字体颜色（白色）
-      'fontSize': '30rpx',     // 按钮字体大小
-      'width': '80%',       // 按钮宽度（占屏幕宽度的 80%）
-      'height': '88rpx',       // 按钮高度
-      'bgColor': '#2b7de0',    // 按钮背景颜色（蓝色）
-      'radius': '44rpx',       // 按钮圆角半径
+      'text': '',              // 按钮文案（空=不显示此按钮）
+      'textAlign': 'center',   // 文本对齐方式
+      'fontFamily': '',        // 按钮字体
+      'fontColor': '#999999',  // 按钮字体颜色（灰色）
+      'fontSize': '108rpx',     // 按钮字体大小
+      'top': '0',         // 按钮距离弹窗顶部的距离
       'left': 'center',        // 按钮水平位置（居中）
-      'top': '58%'             // 按钮距离屏幕顶部的位置
+      'width': '0',       // 按钮宽度
+      'height': '0',       // 按钮高度
+      'bgColor': '#F5F5F5',    // 按钮背景颜色（浅灰色）
+      'radius': '36rpx',       // 按钮圆角半径
+      'borderColor': 'transparent', // 按钮边框颜色（透明）
+      'borderWidth': '0'       // 按钮边框线宽
     },
     // === 登录授权按钮 sureBtnStyle ===
     sureBtnStyle: {
@@ -299,7 +305,9 @@ function getFullScreenOption() {
       {
         'ifShow': true,        // 是否展示自定义控件
         'name': '‹',          // 按钮文案（返回按钮）
-        'openType': "navigateBack", // 微信小程序的返回功能
+        // 注意：不配置 openType/url —— 点击后插件仅回调 502+id（id='back'），
+        // 不操作小程序页面栈（配置 navigateBack 会退出当前页回到上一页），
+        // 业务方在 502 回调中按"仅关闭授权页"处理，不做页面跳转
         'textAlign': 'left',   // 文本对齐方式（左对齐）
         'fontFamily': '',        // 按钮字体
         'fontColor': '#000000',  // 按钮字体颜色（黑色）
@@ -310,8 +318,27 @@ function getFullScreenOption() {
         'height': '68rpx',      // 按钮高度
         'bgColor': 'transparent', // 按钮背景（透明）
         'borderColor': 'transparent', // 按钮边框（透明）
-        'borderWidth': "0px"    // 按钮边框线宽（无）
-      }
+        'borderWidth': "0px",    // 按钮边框线宽（无）
+        'id':"back"
+      },
+      {
+        'ifShow': true,        // 是否展示自定义控件
+        'name': '其他登录方式>', // 按钮文案
+        'openType': 'reLaunch', // 由插件在收起授权页的同时直接跳转：reLaunch 整页替换、无 tab 滑动动画，
+        // 比 switchTab 更连贯（switchTab 动画从宿主页滑出，中间页可见时间长）
+        'url': '/pages/page-captcha/index', // 跳转目标：行为验证码页
+        'lineHeight':'88rpx',
+        'fontColor': '#FFFFFF',  // 按钮字体颜色（白色）
+        'fontSize': '30rpx',     // 按钮字体大小
+        'width': '80%',       // 按钮宽度（占屏幕宽度的 80%）
+        'height': '88rpx',       // 按钮高度
+        'bgColor': '#2b7de0',    // 按钮背景颜色（蓝色）
+        'radius': '44rpx',       // 按钮圆角半径
+        'left': 'center',        // 按钮水平位置（居中）
+        'top': '58%' ,            // 按钮距离屏幕顶部的位置
+        'textAlign': 'center',   // 文本对齐方式（左对齐）
+        'id':"other"
+      },
     ],
   };
 }
@@ -362,11 +389,12 @@ function getMinimalPopupOption() {
       'fontFamily': '',        // 号码栏字体
       'fontColor': '#333333',  // 号码栏字体颜色（深灰色）
       'fontSize': '44rpx',     // 号码栏字体大小（中等）
-      'top': '80rpx',          // 号码栏距离弹窗顶部的距离
+      'top': '130rpx',          // 号码栏距离弹窗顶部的距离
       'left': 'center'         // 号码栏水平位置（居中）
     },
     // === 授权文本 authTextStyle ===
     authTextStyle: {
+      'top':'80rpx',
       'fontSize': '25rpx'      // 授权文本字体大小
     },
     // === 授权栏 authTipStyle ===
@@ -375,19 +403,16 @@ function getMinimalPopupOption() {
     },
     // === 取消授权按钮 cancleBtnStyle ===
     cancleBtnStyle: {
-      'text': '',              // 按钮文案（空=不显示此按钮）
+      'text': 'X',              // 按钮文案（空=不显示此按钮）
       'textAlign': 'center',   // 文本对齐方式
-      'fontFamily': '',        // 按钮字体
-      'fontColor': '#999999',  // 按钮字体颜色（灰色）
-      'fontSize': '28rpx',     // 按钮字体大小
-      'top': '310rpx',         // 按钮距离弹窗顶部的距离
-      'left': 'center',        // 按钮水平位置（居中）
-      'width': '200rpx',       // 按钮宽度
-      'height': '72rpx',       // 按钮高度
-      'bgColor': '#F5F5F5',    // 按钮背景颜色（浅灰色）
-      'radius': '36rpx',       // 按钮圆角半径
+      'fontColor': '#000000',  // 按钮字体颜色（灰色）
+      'fontSize': '40rpx',     // 按钮字体大小
+      'top': '30rpx',         // 按钮距离弹窗顶部的距离
+      'left': '690rpx',  // 按钮位置：屏幕宽度 - 30rpx = 720rpx（右上角，适配所有机型）
+      'width': '40rpx',       // 按钮宽度
+      'height': '40rpx',       // 按钮高度
+      'bgColor': 'transparent',    // 按钮背景颜色（浅灰色）
       'borderColor': 'transparent', // 按钮边框颜色（透明）
-      'borderWidth': '0'       // 按钮边框线宽
     },
     // === 登录授权按钮 sureBtnStyle ===
     sureBtnStyle: {
@@ -396,7 +421,7 @@ function getMinimalPopupOption() {
       'fontFamily': '',        // 按钮字体
       'fontColor': '#FFFFFF',  // 按钮字体颜色（白色）
       'fontSize': '28rpx',     // 按钮字体大小
-      'top': '220rpx',         // 按钮距离弹窗顶部的距离
+      'top': '240rpx',         // 按钮距离弹窗顶部的距离
       'left': 'center',        // 按钮水平位置（居中）
       'width': '520rpx',       // 按钮宽度（占弹窗宽度的大部分）
       'height': '80rpx',       // 按钮高度（较大）
@@ -432,9 +457,92 @@ function getMinimalPopupOption() {
   };
 }
 
+/**
+ * 预设 4：底部弹窗样式 + 未勾选协议二次确认弹窗（msgType=1）
+ *
+ * 【特点】
+ * - 基于标准底部弹窗样式（getBottomPopupOption）
+ * - 【新增于插件 2.3.5 / 移动接入文档 V1.1.8】用户未勾选协议点击登录按钮时，
+ *   弹出底部二次确认提示框（替代默认 msgType='0' 的箭头提示框）
+ *
+ * 【说明】
+ * - msgType='0'（默认）为箭头提示框，'1' 为底部提示框
+ * - msg* 系列配置项均随 option 透传给插件，不传时使用插件默认样式
+ * - msgSureBtnStyle / msgCancelBtnStyle 还支持 bgImage/bgPosition/bgRepeat/bgSize 图片按钮配置
+ *
+ * @returns {Object} UI 配置对象
+ */
+function getUncheckConfirmOption() {
+  const base = getBottomPopupOption();
+
+  return {
+    ...base,
+    // === 未勾选协议提示框类型 msgType（V1.1.8 新增）===
+    'msgType': '1',                    // '0'=箭头提示框（默认），'1'=底部提示框
+
+    // === 协议提示框蒙层 msgMaskStyle ===
+    'msgMaskStyle': {
+      'ifShow': true,                  // 是否展示蒙层（默认 true）
+      'bgColor': 'rgba(0, 0, 0, 0.5)', // 蒙层背景颜色
+    },
+
+    // === 协议提示框面板 msgPanelStyle ===
+    'msgPanelStyle': {
+      'width': '100%',                 // 面板宽度（百分比或数值）
+      'height': '364rpx',              // 面板高度（百分比或数值）
+      'bottom': 'center',              // 距可视区域底部距离（center/百分比/数值）
+      'left': 'center',                // 距左边距离（center/百分比/数值）
+      'bgColor': '#FFFFFF',            // 面板背景颜色
+      'radius': '40rpx',               // 面板圆角
+    },
+
+    // === 协议提示框协议栏文案 msgTextStyle ===
+    'msgTextStyle': {
+      // 'fontFamily': '',             // 文案字体
+      // 'top': '40rpx',               // 文案距面板顶部高度
+      // 'left': 'center',             // 文案距面板左边框距离
+      'textAlign': 'center',           // 文案对齐（center/left/right）
+      'fontColor': '#333333',          // 文案字体颜色
+    },
+
+    // === 协议提示框协议链接样式 msgLinkStyle ===
+    'msgLinkStyle': {
+      // 'fontFamily': '',             // 协议名称字体
+      'fontColor': '#2b7de0',          // 协议名称字体颜色（蓝色）
+    },
+
+    // === 协议提示框确认按钮 msgSureBtnStyle ===
+    'msgSureBtnStyle': {
+      // 'top': '40rpx',               // 按钮距面板顶部高度（百分比或数值）
+      // 'left': 'center',             // 按钮距面板左边距离（百分比或数值）
+      'text': '同意并继续',             // 按钮文案（不超过 6 字）
+      'fontSize': '32rpx',             // 字体大小
+      'fontColor': '#FFFFFF',          // 文案字体颜色
+      'textAlign': 'center',           // 文案对齐（center/left/right）
+      'bgColor': '#2b7de0',            // 按钮背景颜色
+      'radius': '44rpx',               // 按钮圆角
+      // 图片按钮可选：bgImage（背景图 url）、bgPosition（默认 center）、
+      //              bgRepeat（默认 no-repeat）、bgSize（默认 contain）
+    },
+
+    // === 协议提示框取消按钮 msgCancelBtnStyle ===
+    'msgCancelBtnStyle': {
+      // 'top': '120rpx',              // 按钮距面板顶部高度（百分比或数值）
+      // 'left': 'center',             // 按钮距面板左边距离（百分比或数值）
+      'text': '取消',                   // 按钮文案（不超过 6 字）
+      'fontSize': '32rpx',             // 字体大小
+      'fontColor': '#666666',          // 文案字体颜色
+      'textAlign': 'center',           // 文案对齐（center/left/right）
+      // 'bgColor': '#F5F5F5',         // 按钮背景颜色（可选）
+      // 'radius': '44rpx',            // 按钮圆角（可选）
+    },
+  };
+}
+
 // === 导出 ===
 module.exports = {
   getBottomPopupOption,    // 底部弹窗样式（标准版）
   getFullScreenOption,     // 全屏样式
   getMinimalPopupOption,   // 极简样式
+  getUncheckConfirmOption, // 未勾选协议二次确认弹窗样式（msgType=1，插件 2.3.5 / V1.1.8 新增）
 };

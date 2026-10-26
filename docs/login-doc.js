@@ -40,7 +40,7 @@ module.exports = {
 | 组件 | 推荐版本 | 说明 |
 |---|---|---|
 | npm SDK（\`shanyan-miniprogram-sdk\`） | 1.0.2 | 通过 \`npm install shanyan-miniprogram-sdk@<version>\` 安装 |
-| 取号插件（\`auth-plugin\`） | 2.2.0 | 在 \`app.json\` 的 \`plugins\` 中配置 \`version\` 字段 |
+| 取号插件（\`auth-plugin\`） | 2.3.5 | 在 \`app.json\` 的 \`plugins\` 中配置 \`version\` 字段 |
 
 > **注意**：1.0.3 版本存在语法错误（\`getNetworkType\` 方法缺少函数声明，报错 \`'return' outside of function\`），请暂时不要升级。
 
@@ -69,7 +69,7 @@ npm install shanyan-miniprogram-sdk
   ],
   "plugins": {
     "auth-plugin": {
-      "version": "2.2.0",
+      "version": "2.3.5",
       "provider": "wx35678fec06d475b4"
     }
   }
@@ -95,7 +95,7 @@ npm install shanyan-miniprogram-sdk
 **④ js 文件中引入 SDK：**
 
 \`\`\`JavaScript
-const SDK = require('shanyan-miniprogram-sdk');
+const SDK = require('../sdk/index');
 \`\`\`
 
 ### 4\\.3 初始化 SDK
@@ -108,7 +108,7 @@ const SDK = require('shanyan-miniprogram-sdk');
 \`\`\`JavaScript
 SDK.init({ appId: 'YOUR_APP_ID' }, (res) => {
   if (res.code === '200000') {
-    console.log('初始化成功, traceId:', res.traceId);
+    console.log('初始化成功, msgId:', res.msgId);
   } else {
     console.log('初始化失败:', res.message);
   }
@@ -121,7 +121,7 @@ SDK.init({ appId: 'YOUR_APP_ID' }, (res) => {
 |---|---|---|
 |code|string|\`'200000'\`=成功，其他=失败|
 |message|string|结果描述|
-|traceId|string|请求追踪 ID（成功时返回）|
+|msgId|string|消息 ID（成功时返回，即本次请求追踪 ID）|
 
 ### 4\\.4 打开授权页
 
@@ -150,10 +150,66 @@ SDK.openLoginAuth((res) => {
 
 |参数|类型|说明|
 |---|---|---|
-|code|string|\`'200000'\`=成功，\`'501'\`=用户取消，其他=失败|
+|code|string|\`'200000'\`=成功，\`'501'\`=用户取消，\`'502'\`=用户选择其他登录方式（点击自定义控件），其他=失败|
 |message|string|结果描述|
 |token|string|取号凭证（成功时返回，用于服务端校验）|
 |msgId|string|消息 ID（成功时返回）|
+|id|string|自定义控件 ID（\`code='502'\` 且点击的是 customControlStyle 配置的控件时返回，用于区分点击的控件）|
+
+**cfg 可选入参：**
+
+|参数|类型|说明|
+|---|---|---|
+|option|Object|授权页 UI 配置，详见「6 授权页自定义配置」|
+|authLoadSuccess|Function|授权弹窗加载成功回调（V1.1.6 新增），见下文|
+|clickListenerCallback|Function|点击登录按钮/协议勾选框监听（V1.1.6 新增），见下文|
+|hotspotCheck|number|是否开启热点检测：\`1\`-开启，\`0\`-关闭。SDK 默认策略：已通过 \`preCheckMobile\` 预检查自动传 \`0\`，未预检查自动传 \`1\`；显式传入时优先（V1.1.6 新增）|
+|expandParams|string|扩展参数，格式：\`参数名=值\`，多个用 \\| 分割，透传给插件|
+
+> 重试参数 \`retryCount\`/\`retryInterval\` 仅 \`preCheckMobile\` 支持，\`openLoginAuth\` 不提供重试配置。
+
+#### 4\\.4\\.1 授权页事件回调（V1.1.6 新增）
+
+插件 2.3.4 起支持授权页加载成功、勾选协议和用户点击登录按钮的回调，通过 \`openLoginAuth\` 的 cfg 传入：
+
+\`\`\`JavaScript
+SDK.openLoginAuth({
+  // UI 配置（可选）
+  option: { ... },
+  // 授权弹窗加载成功
+  authLoadSuccess: (res) => {
+    console.log('授权页加载成功, msgId:', res.msgId);
+    // 适合在这里关闭拉起授权页前的 loading
+  },
+  // 点击登录按钮和协议勾选框的监听
+  clickListenerCallback: (res) => {
+    if (res.code === '1') {
+      console.log('用户点击登录按钮');
+    } else if (res.code === '2') {
+      console.log('用户点击协议勾选框, 勾选状态:', res.checked);
+    }
+  }
+}, (res) => {
+  // 授权结果回调（同上文）
+});
+\`\`\`
+
+**authLoadSuccess 回调参数：**
+
+|参数|类型|说明|
+|---|---|---|
+|code|string|\`'103000'\`|
+|message|string|\`'弹窗加载成功'\`|
+|msgId|string|消息 ID|
+
+**clickListenerCallback 回调参数：**
+
+|参数|类型|说明|
+|---|---|---|
+|code|string|\`'1'\`=用户点击登录按钮，\`'2'\`=用户点击协议勾选框|
+|checked|boolean|协议勾选状态（仅 \`code='2'\` 时返回）|
+|message|string|\`'用户点击登录按钮'\` / \`'用户点击协议勾选框'\`|
+|msgId|string|消息 ID|
 
 ### 4\\.5 完整调用流程示例
 
@@ -165,8 +221,17 @@ SDK.init({ appId: 'your_app_id' }, (initRes) => {
     return;
   }
 
-  // 2. 打开授权页
-  SDK.openLoginAuth((authRes) => {
+  // 2. 打开授权页（cfg 中可传入授权页事件回调与取号参数，均为可选）
+  SDK.openLoginAuth({
+    authLoadSuccess: (loadRes) => {
+      // 授权弹窗加载成功（V1.1.6 新增），可在此关闭 loading
+      wx.hideLoading();
+    },
+    clickListenerCallback: (clickRes) => {
+      // 点击登录按钮 / 协议勾选框监听（V1.1.6 新增）
+      console.log('授权页点击事件:', clickRes.code, clickRes.checked);
+    }
+  }, (authRes) => {
     if (authRes.code === '200000') {
       // 3. 将 token 发送到你的业务服务端
       wx.request({
@@ -229,6 +294,21 @@ SDK.openLoginAuth({
       text: '一键登录',
       bgColor: '#2b7de0',
     },
+  }
+}, (res) => { ... });
+\`\`\`
+
+**未勾选协议二次确认弹窗示例（新增于插件 2.3.5 / 移动文档 V1.1.8）：**
+
+默认（\`msgType='0'\`）未勾选协议点击按钮时出现箭头提示框；配置 \`msgType='1'\` 切换为底部提示框：
+
+\`\`\`JavaScript
+SDK.openLoginAuth({
+  option: {
+    msgType: '1',
+    msgMaskStyle: { ifShow: true, bgColor: 'rgba(0, 0, 0, 0.5)' },
+    msgPanelStyle: { width: '100%', height: '364rpx', bottom: 'center', left: 'center', bgColor: '#FFFFFF', radius: '40rpx' },
+    // 其余可选：msgTextStyle / msgLinkStyle / msgSureBtnStyle / msgCancelBtnStyle，详见 6.2
   }
 }, (res) => { ... });
 \`\`\`
@@ -313,6 +393,46 @@ SDK.openLoginAuth({
 |**蒙层**|maskStyle\\.ifShowMask|是否显示蒙层|boolean，默认 true|可选|
 ||maskStyle\\.bgColor|蒙层背景色|十六进制颜色码|可选|
 ||maskStyle\\.opacity|蒙层透明度|数值|可选|
+|**协议提示框类型**|msgType|未勾选协议点击按钮时的提示框类型|\`0\`=箭头提示框（默认），\`1\`=底部提示框|可选（新增于插件 2.3.5 / 移动文档 V1.1.8）|
+|**协议提示框蒙层**|msgMaskStyle\\.ifShow|是否展示蒙层|boolean，默认 true|可选|
+||msgMaskStyle\\.bgColor|蒙层背景颜色|颜色码，如 \`rgba(0, 0, 0, 0.5)\`|可选|
+|**协议提示框面板**|msgPanelStyle\\.width|面板宽度|百分比或数值|可选|
+||msgPanelStyle\\.height|面板高度|百分比或数值，如 \`364rpx\`|可选|
+||msgPanelStyle\\.bottom|面板距可视区域底部距离|\`center\` / 百分比 / 数值|可选|
+||msgPanelStyle\\.left|面板距左边距离|\`center\` / 百分比 / 数值|可选|
+||msgPanelStyle\\.bgColor|面板背景颜色|十六进制颜色码|可选|
+||msgPanelStyle\\.radius|面板圆角|百分比或数值|可选|
+|**协议提示框协议栏**|msgTextStyle\\.fontFamily|文案字体|string|可选|
+||msgTextStyle\\.top|文案距面板顶部高度|百分比或数值|可选|
+||msgTextStyle\\.left|文案距面板左边框距离|百分比或数值|可选|
+||msgTextStyle\\.textAlign|文案对齐|\`center/left/right\`|可选|
+||msgTextStyle\\.fontColor|文案字体颜色|十六进制颜色码|可选|
+|**协议提示框协议样式**|msgLinkStyle\\.fontFamily|协议名称字体|string|可选|
+||msgLinkStyle\\.fontColor|协议名称字体颜色|十六进制颜色码|可选|
+|**协议提示框确认按钮**|msgSureBtnStyle\\.top|按钮距面板顶部高度|百分比或数值|可选|
+||msgSureBtnStyle\\.left|按钮距面板左边距离|百分比或数值|可选|
+||msgSureBtnStyle\\.text|按钮文案|string，不超过 6 字|可选|
+||msgSureBtnStyle\\.fontSize|字体大小|数值，如 \`32rpx\`|可选|
+||msgSureBtnStyle\\.fontColor|文案字体颜色|十六进制颜色码|可选|
+||msgSureBtnStyle\\.textAlign|文案对齐|\`center/left/right\`|可选|
+||msgSureBtnStyle\\.bgColor|按钮背景颜色|十六进制颜色码|可选|
+||msgSureBtnStyle\\.radius|按钮圆角|百分比或数值|可选|
+||msgSureBtnStyle\\.bgImage|按钮背景图像|url|可选|
+||msgSureBtnStyle\\.bgPosition|背景图像起始位置|string，默认 \`center\`|可选|
+||msgSureBtnStyle\\.bgRepeat|是否及如何重复背景图像|string，默认 \`no-repeat\`|可选|
+||msgSureBtnStyle\\.bgSize|背景图像尺寸|string，默认 \`contain\`|可选|
+|**协议提示框取消按钮**|msgCancelBtnStyle\\.top|按钮距面板顶部高度|百分比或数值|可选|
+||msgCancelBtnStyle\\.left|按钮距面板左边距离|百分比或数值|可选|
+||msgCancelBtnStyle\\.text|按钮文案|string，不超过 6 字|可选|
+||msgCancelBtnStyle\\.fontSize|字体大小|数值，如 \`32rpx\`|可选|
+||msgCancelBtnStyle\\.fontColor|文案字体颜色|十六进制颜色码|可选|
+||msgCancelBtnStyle\\.textAlign|文案对齐|\`center/left/right\`|可选|
+||msgCancelBtnStyle\\.bgColor|按钮背景颜色|十六进制颜色码|可选|
+||msgCancelBtnStyle\\.radius|按钮圆角|百分比或数值|可选|
+||msgCancelBtnStyle\\.bgImage|按钮背景图像|url|可选|
+||msgCancelBtnStyle\\.bgPosition|背景图像起始位置|string，默认 \`center\`|可选|
+||msgCancelBtnStyle\\.bgRepeat|是否及如何重复背景图像|string，默认 \`no-repeat\`|可选|
+||msgCancelBtnStyle\\.bgSize|背景图像尺寸|string，默认 \`contain\`|可选|
 
 ### 6\\.3 自定义控件说明
 
@@ -321,8 +441,8 @@ SDK.openLoginAuth({
 |字段|含义|值|说明|
 |---|---|---|---|
 |ifShow|是否展示|boolean，默认 false|必选|
-|id|控件 ID|string|可选|
-|openType|跳转方式|\`navigate/redirect/switchTab/reLaunch/navigateBack\`|可选|
+|id|控件 ID|string|可选；用户点击该控件返回 \`code='502'\` 时，id 会随 openLoginAuth 回调返回，用于区分点击的是哪个控件|
+|openType|跳转方式|\`navigate/redirect/switchTab/reLaunch/navigateBack\`，取值说明见下表|可选|
 |name|显示文案|string|可选|
 |width|宽度|百分比或数值|可选|
 |height|高度|百分比或数值|可选|
@@ -334,7 +454,19 @@ SDK.openLoginAuth({
 |bgColor|背景颜色|十六进制颜色码，如\`“#FFFFFF”\`|可选|
 |textAlign|文本对齐|\`center/left/right\`|可选|
 |radius|圆角|数值|可选|
-|url|跳转 URL|URL 链接|必选|
+|url|跳转 URL|URL 链接，如 \`/pages/contract/index\`|跳转类控件必选；\`openType='navigateBack'\`（返回）时无需传|
+
+**openType 取值说明**（对应微信小程序标准页面跳转 API）：
+
+|取值|对应 API|行为|
+|---|---|---|
+|\`navigate\`|\`wx.navigateTo\`|保留当前页跳转到应用内页面（新页面入栈，可返回）|
+|\`redirect\`|\`wx.redirectTo\`|关闭当前页跳转（替换当前页面，不可返回授权前页面）|
+|\`switchTab\`|\`wx.switchTab\`|跳转到 tabBar 页（同时关闭其他非 tabBar 页面）|
+|\`reLaunch\`|\`wx.reLaunch\`|关闭所有页面后跳转（重置导航栈）|
+|\`navigateBack\`|\`wx.navigateBack\`|返回上一页（无需传 \`url\`），常用于授权页左上角"返回"按钮|
+
+> 移动官方文档未标注 openType 默认值，建议显式传入。跳转目标页面需在小程序 \`app.json\` 的 \`pages\` 中注册（tabBar 页需在 \`tabBar.list\` 中）。
 
 ## 7 返回码说明
 
@@ -346,6 +478,7 @@ SDK.openLoginAuth({
 |001023|超时|init 接口超时|
 |000400|服务端响应为空|服务端未返回有效数据|
 |000401|请求服务端失败|网络请求异常|
+|000402|初始化失败|init 请求返回业务失败（详细 retCode/retMsg 见日志上报 inner 层）|
 |000500|请先调用 init 初始化|openLoginAuth 前未调用 init|
 |000501|移动 appId 未初始化|cmccAppId 未获取到|
 |000520|appId 必传|init 未传入 appId|
@@ -358,6 +491,7 @@ SDK.openLoginAuth({
 |000606|网络类型处理异常|网络类型处理时发生异常|
 |000607|网络类型调用异常|网络类型调用时发生异常|
 |000001|获取网络类型失败|获取网络类型失败|
+|000002|运营商返回失败：{运营商原始返回信息}|运营商返回无 code 的失败结构（如 YDData/CTData/CUData 三网聚合错误），message 拼接运营商原始返回 JSON|
 
 ### 7\\.2 运营商返回码
 

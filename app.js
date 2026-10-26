@@ -64,7 +64,15 @@ App({
   },
 
   onLaunch() {
-    const envConfig = ENV_MAP.develop;
+    const envConfig = ENV_MAP.release;
+
+    // 设置 SDK 运行环境（必须在 init 前调用）
+    SDK.setEnvironment(envConfig.sdkEnv);
+    SDK.setLog(true);
+    // 清理本地缓存的初始化参数，确保下次 init 时重新请求服务端
+    SDK.clearScripCache();
+
+    // 保存环境配置到全局数据，供页面层使用
     this.globalData.appId = envConfig.appId;
     this.globalData.appKey = envConfig.appKey;
     this.globalData.envLabel = envConfig.label;

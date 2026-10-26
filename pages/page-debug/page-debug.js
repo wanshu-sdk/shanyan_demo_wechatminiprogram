@@ -17,12 +17,17 @@ const MOBILE_QUERY_URLS = {
  * 调试模式页 - 分步测试 SDK 完整流程
  *
  * 【业务流程】
- * 该页面提供三个独立的操作按钮，用户按顺序点击来测试 SDK 的完整功能链路：
+ * 该页面提供四个操作按钮（含一个可选步骤），用户按顺序点击来测试 SDK 的完整功能链路：
  *
  * 步骤 1 - 初始化（SDK.init）
  *   - 调用 SDK.init({ appId }, callback)
  *   - 请求服务端获取运营商（移动/联通/电信）的取号参数
  *   - 成功返回 traceId，保存为后续取号凭证
+ *
+ * 可选 - 预检查网络环境（SDK.preCheckMobile）
+ *   - 需在步骤 1 成功后调用（可选步骤，不影响主流程）
+ *   - 判断当前网络是否支持取号
+ *   - code='0' 支持取号；code='504' 不支持；code='505' 疑似热点
  *
  * 步骤 2 - 拉起授权页获取 token（SDK.openLoginAuth）
  *   - 需步骤 1 成功才能调用
@@ -51,9 +56,10 @@ Page({
     appId: app.globalData.appId,
     envLabel: app.globalData.envLabel,
     logs: [],
-    // 三个步骤的执行结果，每步成功时保存响应数据
+    // 步骤的执行结果，每步成功时保存响应数据
     stepResults: {
       init: null,       // 步骤 1 的结果（含 traceId）
+      precheck: null,   // 可选预检查的结果（含 code: '0'/'504'/'505'）
       token: null,      // 步骤 2 的结果（含加密 token）
       mobile: null,     // 步骤 3 的结果（含解密手机号）
     },
@@ -104,6 +110,38 @@ Page({
   },
 
   /**
+   * 可选步骤：预检查网络环境（SDK.preCheckMobile）
+   *
+   * 【前置条件】
+   * - 步骤 1（init）必须成功
+   * - 此为可选步骤，不影响后续步骤 2 的执行
+   *
+   * 【流程】
+   * 1. 调用 SDK.preCheckMobile(callback)
+   * 2. 插件判断当前网络状态
+   * 3. 返回结果码：
+   *    - code='0'   : 网络环境支持取号（可拉起授权页）
+   *    - code='504' : 网络环境不支持取号（纯 WiFi）
+   *    - code='505' : 疑似热点环境
+   *
+   * 【用途】
+   * 在拉起授权页之前提前识别不支持取号的场景，便于做降级处理。
+   */
+  onPreCheck() {
+    if (!this.data.stepResults.init) {
+      this.appendToLog('请先完成第一步初始化', true);
+      return;
+    }
+    this.appendToLog('调用 SDK.preCheckMobile()，预检查网络环境...');
+    SDK.preCheckMobile((res) => {
+      this.appendToLog(`preCheckMobile 回调: ${JSON.stringify(res)}`);
+      this.setData({ 'stepResults.precheck': res, hasResults: true });
+      // 直接展示 SDK 实际返回的 message，不做额外解读
+      this.appendToLog(res.message, res.code !== '0');
+    });
+  },
+
+  /**
    * 步骤 2：拉起授权页获取加密 token
    *
    * 【前置条件】
@@ -111,10 +149,14 @@ Page({
    * - 否则 openLoginAuth 会内部自动重试初始化
    *
    * 【流程】
-   * 1. 调用 SDK.openLoginAuth(callback)
+   * 1. 调用 SDK.openLoginAuth(cfg, callback)
    * 2. SDK 拉起运营商授权页（底部弹窗或全屏）
    * 3. 用户确认授权 → 返回加密 token
    * 4. 用户取消授权 → 返回 code='501'（非异常）
+   *
+   * 【授权页事件回调（新增于插件 2.3.4 / 接入文档 V1.1.6）】
+   * - authLoadSuccess：弹窗加载成功（code='103000'）
+   * - clickListenerCallback：点击登录按钮（code='1'）/ 协议勾选框（code='2'，checked 为勾选状态）
    *
    * 【重要】
    * - token 格式：A1/A2/A3-{base64密文}（A1=移动, A2=联通, A3=电信）
@@ -123,7 +165,15 @@ Page({
    */
   onStep2Token() {
     this.appendToLog('调用 SDK.openLoginAuth()，等待拉起授权页...');
-    SDK.openLoginAuth((res) => {
+    SDK.openLoginAuth({
+      authLoadSuccess: (res) => {
+        this.appendToLog(`授权页加载成功: ${JSON.stringify(res)}`);
+      },
+      clickListenerCallback: (res) => {
+        const action = res.code === '1' ? '用户点击登录按钮' : `用户点击协议勾选框 (checked=${res.checked})`;
+        this.appendToLog(`授权页点击事件: ${action}`);
+      },
+    }, (res) => {
       this.appendToLog(`openLoginAuth 回调: ${JSON.stringify(res)}`);
       if (res.code === '200000') {
         // token 一次有效：拿到新 token 后清除第三步结果（旧 token 失效）

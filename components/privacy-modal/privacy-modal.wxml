@@ -1,4 +1,4 @@
-<view class="modal-overlay" wx:if="{{visible}}" catchtap="onDisagree">
+<view class="modal-overlay" wx:if="{{visible}}">
   <view class="modal-content" catchtap="stopPropagation">
     <view class="modal-title">隐私政策提示</view>
     <view class="modal-body">

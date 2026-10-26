@@ -88,6 +88,29 @@ Page({
   },
 
   /**
+   * 构建授权页事件回调（新增于插件 2.3.4 / 接入文档 V1.1.6）
+   *
+   * 【用途】
+   * - authLoadSuccess：授权弹窗加载成功时触发，此时即可关闭 loading（早于取号结果回调）
+   * - clickListenerCallback：监听用户点击登录按钮（code='1'）和协议勾选框（code='2'，checked 为勾选状态）
+   */
+  buildAuthEventCallbacks() {
+    return {
+      authLoadSuccess: (res) => {
+        this.hideLoading();
+        dlog.log('[Page-Experience] 授权页加载成功:', JSON.stringify(res));
+      },
+      clickListenerCallback: (res) => {
+        if (res.code === '1') {
+          dlog.log('[Page-Experience] 用户点击登录按钮');
+        } else if (res.code === '2') {
+          dlog.log('[Page-Experience] 用户点击协议勾选框, checked:', res.checked);
+        }
+      },
+    };
+  },
+
+  /**
    * 通用方法：使用指定 UI 预设打开授权页，完成后跳转到结果页
    *
    * @param {Function} getPreset - 返回 UI 配置对象的函数（如 getBottomPopupOption）
@@ -102,32 +125,40 @@ Page({
     const option = getPreset();
     this.showLoadingForAuth();
     dlog.log('[Page-Experience] openAuthWithStyle 拉起授权页, label:', label);
-    SDK.openLoginAuth({ option: option }, (authRes) => {
+    SDK.openLoginAuth({ option: option, ...this.buildAuthEventCallbacks() }, (authRes) => {
       this.hideLoading();
       dlog.log('[Page-Experience] openAuthAuth result:', JSON.stringify(authRes));
       dlog.log('[Page-Experience] authRes.code:', authRes && authRes.code, 'type:', typeof authRes);
       if (authRes.code === '501') {
-        // 全屏样式中"其他登录方式"按钮返回 501，跳转到行为验证码
-        if (label === '全屏样式') {
-          dlog.log('[Page-Experience] 全屏样式用户选择其他登录方式 (501)，跳转到行为验证码页');
-          wx.switchTab({
-            url: '/pages/page-captcha/index',
-            success: () => { dlog.log('[Page-Experience] switchTab 跳转成功'); },
-            fail: (err) => { dlog.error('[Page-Experience] switchTab 跳转失败:', JSON.stringify(err)); },
-          });
-          return;
-        }
+        // 501 统一按用户取消授权处理
         dlog.log('[Page-Experience] 用户取消授权 (501)');
         wx.showToast({ title: '用户取消授权', icon: 'none' });
         return;
       }
       if (authRes.code === '502') {
-        dlog.log('[Page-Experience] 用户选择其他登录方式 (502)，跳转到行为验证码页');
-        wx.switchTab({
-          url: '/pages/page-captcha/index',
-          success: () => { dlog.log('[Page-Experience] switchTab 跳转成功'); },
-          fail: (err) => { dlog.error('[Page-Experience] switchTab 跳转失败:', JSON.stringify(err)); },
-        });
+        // 502=用户选择其他登录方式（点击自定义控件），authRes.id 为 customControlStyle 配置的控件 id
+        if (authRes.id === 'back') {
+          // 点击全屏样式左上角"返回"按钮（id='back'）：按返回处理，不做跳转
+          dlog.log('[Page-Experience] 用户点击返回按钮 (502, id=back)，不做跳转');
+          return;
+        }
+        // 控件已配置 openType='reLaunch' + url：插件在收起授权页的同时直接跳转到验证码页。
+        // 此处仅兜底：检测当前已不在目标页时才补跳，避免与插件跳转叠加造成二次切换动画（闪烁）
+        dlog.log('[Page-Experience] 用户选择其他登录方式 (502), 控件 id:', authRes.id || '(未返回)');
+        try {
+          const pages = getCurrentPages();
+          const current = pages[pages.length - 1];
+          if (!current || current.route !== 'pages/page-captcha/index') {
+            dlog.log('[Page-Experience] 插件未完成跳转，兜底 switchTab 到行为验证码页');
+            wx.switchTab({
+              url: '/pages/page-captcha/index',
+              success: () => { dlog.log('[Page-Experience] switchTab 跳转成功'); },
+              fail: (err) => { dlog.error('[Page-Experience] switchTab 跳转失败:', JSON.stringify(err)); },
+            });
+          }
+        } catch (e) {
+          dlog.error('[Page-Experience] 兜底跳转检测异常:', e.message);
+        }
         return;
       }
       this.navigateToResult(label, authRes);
@@ -168,7 +199,7 @@ Page({
   /** 默认弹窗样式：不传 option，SDK 使用默认配置 */
   onStandardStyle() {
     this.showLoadingForAuth();
-    SDK.openLoginAuth((authRes) => {
+    SDK.openLoginAuth({ ...this.buildAuthEventCallbacks() }, (authRes) => {
       this.hideLoading();
       dlog.log('[Page-Experience] openLoginAuth result:', JSON.stringify(authRes));
       if (authRes.code === '501') {
@@ -176,7 +207,7 @@ Page({
         return;
       }
       if (authRes.code === '502') {
-        dlog.log('[Page-Experience] 用户选择其他登录方式 (502)，跳转到行为验证码页');
+        dlog.log('[Page-Experience] 用户选择其他登录方式 (502), 控件 id:', authRes.id || '(未返回)', '，跳转到行为验证码页');
         wx.switchTab({
           url: '/pages/page-captcha/index',
           success: () => { dlog.log('[Page-Experience] switchTab 跳转成功'); },
@@ -207,6 +238,19 @@ Page({
     const { getBottomPopupOption } = require('../../ui-presets');
     this.showLoadingForAuth();
     this.openAuthWithStyle(getBottomPopupOption, '自定义弹窗样式2');
+  },
+
+  /**
+   * 自定义弹窗样式3：未勾选协议二次确认弹窗（msgType=1）
+   *
+   * 【新增于插件 2.3.5 / 移动接入文档 V1.1.8】
+   * 用户未勾选协议点击登录按钮时，弹出底部二次确认提示框（替代默认箭头提示框），
+   * 提示框的蒙层/面板/文案/按钮样式均可通过 msg* 系列配置自定义。
+   */
+  onCustomStyle3() {
+    const { getUncheckConfirmOption } = require('../../ui-presets');
+    this.showLoadingForAuth();
+    this.openAuthWithStyle(getUncheckConfirmOption, '未勾选协议二次确认');
   },
 
   /** 返回上一页 */

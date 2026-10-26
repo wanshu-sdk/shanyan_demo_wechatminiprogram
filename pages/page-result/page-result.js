@@ -28,7 +28,15 @@ Page({
   },
 
   onLoad(options) {
-    dlog.log('[Page-Result] onLoad options:', JSON.stringify(options));
+    // URL 参数安全解码：navigateTo 传参时做了 encodeURIComponent，微信 onLoad 不会自动解码
+    const safeDecode = (value) => {
+      if (!value) return '';
+      try { return decodeURIComponent(value); } catch (e) { return value; }
+    };
+    const styleName = safeDecode(options.styleName);
+    const resultMessage = safeDecode(options.message);
+
+    dlog.log('[Page-Result] onLoad options:', JSON.stringify({ ...options, styleName, message: resultMessage }));
     dlog.log('[Page-Result] globalData appId:', app.globalData.appId, 'appKey:', app.globalData.appKey, 'env:', app.globalData.envLabel);
 
     try {
@@ -43,25 +51,24 @@ Page({
     }
 
     this.setData({
-      styleName: options.styleName || '',
+      styleName: styleName,
     });
 
     // 行为验证码结果
-    if (options.styleName === 'captcha') {
+    if (styleName === 'captcha') {
       const isSuccess = options.success === 'true';
       this.setData({
         isSuccess,
         ticket: options.ticket || '',
         captchaCode: options.captchaCode || '',
         statusText: isSuccess ? '验证通过' : '验证失败',
-        errorText: options.message ? decodeURIComponent(options.message) : '',
+        errorText: resultMessage,
       });
       return;
     }
 
     // 一键登录结果
     const resultCode = options.code;
-    const resultMessage = options.message || '';
     const token = options.token || '';
 
     dlog.log('[Page-Result] resultCode:', resultCode, 'resultMessage:', resultMessage);
@@ -72,7 +79,7 @@ Page({
     } else {
       const errorMsg = (resultCode === '504' || resultCode === '000001')
         ? '请插入手机SIM卡，并使用数据流量网络访问'
-        : decodeURIComponent(resultMessage);
+        : resultMessage;
       this.setData({
         isSuccess: false,
         statusText: '登录失败',
