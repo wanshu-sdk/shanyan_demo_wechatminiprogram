@@ -242,8 +242,7 @@ function getFullScreenOption() {
       'left': 'center'         // 号码栏水平位置（居中）
     },
     // === 取消授权按钮 cancleBtnStyle ===
-    // 由原自定义返回控件（id='back'）迁移而来：左上角"‹"返回按钮。
-    // 使用标准取消按钮承载返回：点击返回 code='501'，插件确定会关闭授权页，且不操作小程序页面栈
+    // 左上角"‹"返回按钮：点击返回 code='501'，插件确定会关闭授权页，且不操作小程序页面栈
     cancleBtnStyle: {
       'text': '‹',              // 按钮文案（原自定义控件的 name）
       'textAlign': 'left',      // 文本对齐方式（左对齐）
@@ -304,8 +303,6 @@ function getFullScreenOption() {
     },
     // === 自定义按钮控件 customControlStyle（数组格式） ===
     customControlStyle: [
-      // 原左上角返回控件（id='back'）已移除，其样式迁移到 cancleBtnStyle（标准取消按钮，
-      // 点击返回 501 且插件确定关闭授权页）；customControlStyle 仅保留"其他登录方式"控件
       {
         'ifShow': true,        // 是否展示自定义控件
         'name': '其他登录方式>', // 按钮文案

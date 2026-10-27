@@ -155,7 +155,7 @@ Page({
    * 4. 用户取消授权 → 返回 code='501'（非异常）
    *
    * 【授权页事件回调（新增于插件 2.3.4 / 接入文档 V1.1.6）】
-   * - authLoadSuccess：弹窗加载成功（code='103000'）
+   * - authLoadSuccess：弹窗加载成功（code='200000'，SDK 统一成功码）
    * - clickListenerCallback：点击登录按钮（code='1'）/ 协议勾选框（code='2'，checked 为勾选状态）
    *
    * 【重要】

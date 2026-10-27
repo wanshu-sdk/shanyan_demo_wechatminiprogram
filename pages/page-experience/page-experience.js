@@ -119,28 +119,9 @@ Page({
       }
       if (authRes.code === '502') {
         // 502=用户选择其他登录方式（点击自定义控件），authRes.id 为 customControlStyle 配置的控件 id
-        if (authRes.id === 'back') {
-          // 点击全屏样式左上角"返回"按钮（id='back'）：按返回处理，不做跳转
-          dlog.log('[Page-Experience] 用户点击返回按钮 (502, id=back)，不做跳转');
-          return;
-        }
-        // 控件已配置 openType='reLaunch' + url：插件在收起授权页的同时直接跳转到验证码页。
-        // 此处仅兜底：检测当前已不在目标页时才补跳，避免与插件跳转叠加造成二次切换动画（闪烁）
-        dlog.log('[Page-Experience] 用户选择其他登录方式 (502), 控件 id:', authRes.id || '(未返回)');
-        try {
-          const pages = getCurrentPages();
-          const current = pages[pages.length - 1];
-          if (!current || current.route !== 'pages/page-captcha/index') {
-            dlog.log('[Page-Experience] 插件未完成跳转，兜底 switchTab 到行为验证码页');
-            wx.switchTab({
-              url: '/pages/page-captcha/index',
-              success: () => { dlog.log('[Page-Experience] switchTab 跳转成功'); },
-              fail: (err) => { dlog.error('[Page-Experience] switchTab 跳转失败:', JSON.stringify(err)); },
-            });
-          }
-        } catch (e) {
-          dlog.error('[Page-Experience] 兜底跳转检测异常:', e.message);
-        }
+        // 控件已配置 openType='reLaunch' + url：插件会在收起授权页的同时自行执行跳转
+        // （目标由控件的 url/openType 决定），demo 层不做跳转、不做兜底
+        dlog.log('[Page-Experience] 用户选择其他登录方式 (502), 控件 id:', authRes.id || '(未返回)', '，跳转由插件执行');
         return;
       }
       this.navigateToResult(label, authRes);
